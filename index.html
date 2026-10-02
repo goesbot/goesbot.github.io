@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GOES-19 Ottawa Meshcore Bot (beta)</title>
+  <meta name="description" content="The meteorological and hydrological stations the GOES-19 MeshCore bot answers from, across the Ottawa Valley.">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="libraries/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="title-bar">
+    <h1>GOES-19 Ottawa Meshcore Bot <span class="beta">beta</span></h1>
+    <div class="intro">
+      <p>Live local weather for the Ottawa mesh: Mention the bot with a place name and it answers
+        with readings from the nearest station. Everything runs over radio, from the satellite to the mesh,
+        with <u>no internet involved</u>.</p>
+      <p>Stations across the Ottawa Valley send their readings on UHF (401.8 MHz) to GOES-19, <abbr title="National Oceanic and Atmospheric Administration">NOAA</abbr>'s
+        geostationary weather satellite at 75.2° W, which relays them back down in its <a class="link" data-goatcounter-click="link/hrit" href="https://www.ospo.noaa.gov/operations/goes/hrit/index.html" target="_blank" rel="noopener">HRIT</a> broadcast on
+        1694.1 MHz.</p>
+      <p>See the <a class="link" data-goatcounter-click="link/manual" href="#manual">manual</a> for how to use it.</p>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="widget stations" aria-labelledby="stations-title">
+      <header class="widget-head">
+        <h2 class="widget-title" id="stations-title">Stations</h2>
+        <div class="widget-status" id="stations-status"></div>
+      </header>
+      <div class="widget-body">
+        <div class="toolbar">
+          <input class="input" id="search" type="search" placeholder="Station, id, agency, or a place to find the nearest"
+            aria-label="Search stations, or a place to find the nearest stations">
+          <select class="input select" id="sensor" aria-label="Sensor"><option value="">Any sensor</option></select>
+          <select class="input select" id="type" aria-label="Station type">
+            <option value="">Any type</option>
+            <option value="METEOROLOGICAL">Meteorological</option>
+            <option value="MIXED">Mixed (meteorological and hydrological)</option>
+          </select>
+        </div>
+        <div class="near" id="near" aria-live="polite" hidden></div>
+        <div class="scroll" id="scroll">
+          <table class="table">
+            <thead><tr id="head"></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="empty" id="empty" hidden>No station matches these filters</div>
+          <p class="credit" id="credit"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="widget map" aria-labelledby="map-title">
+      <header class="widget-head">
+        <h2 class="widget-title" id="map-title">Map</h2>
+      </header>
+      <div class="widget-body">
+        <p class="note">The bot only recognizes place names within the YOW boundary, but uses stations outside
+          it when they are the nearest station to a location within the boundary.</p>
+        <div class="map-box">
+          <div id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="widget emoji" aria-labelledby="emoji-title">
+      <header class="widget-head">
+        <h2 class="widget-title" id="emoji-title">Emojis</h2>
+      </header>
+      <div class="widget-body" id="emoji"></div>
+    </section>
+
+    <section class="widget hardware" aria-labelledby="hardware-title">
+      <header class="widget-head">
+        <h2 class="widget-title" id="hardware-title">Hardware</h2>
+      </header>
+      <div class="widget-body">
+        <dl class="specs">
+          <div><dt><span class="glyph">📡</span>Antenna</dt><dd>L-band dish</dd></div>
+          <div><dt><span class="glyph">🛰️</span>Downlink</dt><dd>GOES-19 HRIT, 1694.1 MHz</dd></div>
+          <div><dt><span class="glyph">📻</span>Receiver</dt><dd>Nooelec NESDR SMArTee XTR, 2.048 Msps</dd></div>
+          <div><dt><span class="glyph">🖥️</span>Computer</dt><dd>Raspberry Pi 3B+</dd></div>
+          <div><dt><span class="glyph">⚙️</span>Demodulator</dt><dd>goestools</dd></div>
+          <div><dt><span class="glyph">📦</span>Data</dt><dd>DCS files from the LRIT stream: SHEF, ASCII and pseudo-binary messages</dd></div>
+          <div><dt><span class="glyph">📟</span>Mesh radio</dt><dd>Heltec V3, MeshCore companion firmware, USB serial</dd></div>
+          <div><dt><span class="glyph">🔋</span>Power</dt><dd>UPS, keeps running through a power outage</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="widget manual" id="manual" aria-labelledby="man-title">
+      <header class="widget-head">
+        <h2 class="widget-title" id="man-title">Manual</h2>
+      </header>
+      <div class="widget-body">
+        <article class="man">
+          <div class="man-head">GOES19 Meshcore Bot</div>
+
+          <h3>Name</h3>
+          <p>GOES19 – Weather readings from stations across the Ottawa Valley, received via GOES-19's downlink.</p>
+
+          <h3>Synopsis</h3>
+          <p><b>@[GOES19]</b> <b>!help</b> [<i>category</i>]<br>
+            <b>@[GOES19]</b> <b>!temp</b> | <b>!humidity</b> | <b>!wind</b> | <b>!pressure</b> | <b>!rain1</b> | <b>!rain24</b> <i>location</i><br>
+            <b>@[GOES19]</b> <b>!station</b> | <b>!info</b> <i>id</i><br>
+            <b>@[GOES19]</b> <b>!find</b> <i>location</i><br>
+            <b>@[GOES19]</b> <b>!type</b> <i>emoji</i><br>
+            <b>@[GOES19]</b> <b>!status</b><br>
+            <b>@[GOES19]</b> <b>!stats</b><br>
+            <b>@[GOES19]</b> <b>!suggestion</b> <i>text</i><br>
+            <b>@[GOES19]</b> <b>!bug</b> <i>text</i><br>
+            <b>@[GOES19]</b> <b>!ping</b></p>
+
+          <h3>Description</h3>
+          <p>The bot listens on the <b>#weather</b> and <b>#bots</b> channels and answers a message that
+            mentions it, <b>@[GOES19]</b>, and carries a command. The mention can be anywhere in the message.
+            A message without the mention gets no reply.</p>
+          <p>On <b>#testing</b> it answers <b>!ping</b> only; every other command gets no reply there.</p>
+          <p>A <i>location</i> is a city, town, village or neighbourhood inside the YOW boundary. Case, accents
+            and punctuation don't matter, and small typos are forgiven. An <i>id</i> is a station's 8-character
+            ID from the list above.</p>
+
+          <h3>Commands</h3>
+          <dl>
+            <dt><b>!help</b> [<i>category</i>]</dt>
+            <dd>Without a category, the list of categories. With one, its commands:
+              <dl>
+                <dt><b>!help ping</b></dt>
+                <dd>!ping.</dd>
+                <dt><b>!help sensors</b></dt>
+                <dd>!temp, !humidity, !wind, !pressure, !rain1, !rain24, !type.</dd>
+                <dt><b>!help stations</b></dt>
+                <dd>!station, !info, !find.</dd>
+                <dt><b>!help utils</b></dt>
+                <dd>!status, !stats, !suggestion, !bug.</dd>
+              </dl></dd>
+            <dt><b>!temp</b> <i>location</i></dt>
+            <dd>🌡️ Air temperature.</dd>
+            <dt><b>!humidity</b> <i>location</i></dt>
+            <dd>💧 Relative humidity.</dd>
+            <dt><b>!wind</b> <i>location</i></dt>
+            <dd>🎐 Wind speed in km/h, with the direction it blows from when the station reports it.</dd>
+            <dt><b>!pressure</b> <i>location</i></dt>
+            <dd>⚖️ Atmospheric pressure in hPa.</dd>
+            <dt><b>!rain1</b> <i>location</i></dt>
+            <dd>☔ Rain in the last hour, in mm.</dd>
+            <dt><b>!rain24</b> <i>location</i></dt>
+            <dd>☔ Rain in the last 24 hours, in mm.
+              <div class="box">
+                <div class="box-rule" aria-hidden="true"><span>+</span><span class="box-fill"></span><span>+</span></div>
+                <p>For these six commands, the bot picks the station closest to the location that has reported
+                  that sensor in the last 3 hours. The reply says where that station is (📍)
+                  and how old the reading is (⏱️).</p>
+                <div class="box-rule" aria-hidden="true"><span>+</span><span class="box-fill"></span><span>+</span></div>
+              </div></dd>
+            <dt><b>!station</b> <i>id</i></dt>
+            <dd>Every sensor of that station's latest message, then its name (📋) and the age of the message.
+              Readings that don't fit in one message are left out and counted (<b>+3</b>).</dd>
+            <dt><b>!info</b> <i>id</i></dt>
+            <dd>What the station is: name (📋), nearest settlement (📍), coordinates (🗺️), agency (🏢) and one
+              emoji per kind of sensor.</dd>
+            <dt><b>!find</b> <i>location</i></dt>
+            <dd>The IDs of the 3 stations nearest the location, with their distance.</dd>
+            <dt><b>!type</b> <i>emoji</i></dt>
+            <dd>What one emoji of the replies stands for, as in the emoji table.</dd>
+            <dt><b>!status</b></dt>
+            <dd>Receiver health: downlink (🛰️), frequency (📻), SNR (📶), Viterbi (🧮) and deframer (🎞️) sync, and the age of the last message (📡).</dd>
+            <dt><b>!stats</b></dt>
+            <dd>Bot statistics: stations, sensor types, boundary area, commands, version and last update.</dd>
+            <dt><b>!suggestion</b> <i>text</i></dt>
+            <dd>Sends a suggestion for the bot to its operator, with your name and the channel.</dd>
+            <dt><b>!bug</b> <i>text</i></dt>
+            <dd>Reports a bug to the bot's operator, with your name, the channel, the bot's version and your
+              last request and its reply, so say what was wrong right after it happened.</dd>
+            <dt><b>!ping</b></dt>
+            <dd>🏓 Pong!, tagging you (<b>@[</b><i>your name</i><b>]</b>), with how many hops your message took
+              to reach the bot and the repeaters it came through. Works on <b>#testing</b> too.</dd>
+            <dt><b>!bots</b></dt>
+            <dd>On <b>#bots</b>, without a mention: the bot introduces itself. Only when <b>!bots</b> is the
+              whole message, not when it is part of a longer one.</dd>
+          </dl>
+
+          <h3>Examples</h3>
+          <dl>
+            <dt>@[GOES19] !temp Westboro</dt>
+            <dd>🌡️6.7 °C 📍ARLINGTON WOODS, OTTAWA, ON ⏱️6m ago</dd>
+            <dt>@[GOES19] !rain24 Westboro</dt>
+            <dd>☔9.94 mm/24h 📍ARLINGTON WOODS, OTTAWA, ON ⏱️45m ago</dd>
+            <dt>@[GOES19] !find Westboro</dt>
+            <dd>9km: aca1ea74 16km: c881d434 23km: 45b15902</dd>
+            <dt>@[GOES19] !type 🌧️</dt>
+            <dd>🌧️ Rain, total or rate</dd>
+            <dt>@[GOES19] !status</dt>
+            <dd>🛰️Downlink:OK 📻Freq:1.69GHz 📶SNR:5.1dB 🧮Viterbi:SYNCED 🎞️Deframer:SYNCED 📡Last Received: 47s ago</dd>
+            <dt>@[GOES19] !stats</dt>
+            <dd>stations: 50, sensor types: 23, boundary: 38,600 km², commands: 16, version: 0.0.2, last updated: 2026-10-03</dd>
+            <dt>@[GOES19] !suggestion add snow depth</dt>
+            <dd>Thanks! Your suggestion was saved.</dd>
+            <dt>@[GOES19] !bug temp says 40 °C</dt>
+            <dd>Thanks! Your bug report was saved.</dd>
+            <dt>@[GOES19] !ping</dt>
+            <dd>@[Bob] 🏓 Pong! 7 hops | Path: 6a145b,bb4e7c,6bdc45,7c4ca5,d06ebb,6ce364,094137</dd>
+            <dt>@[GOES19] !info aca1ea74</dt>
+            <dd>📋 NEPEAN, ON, CA 📍 ARLINGTON WOODS, OTTAWA, ON 🗺️ 45.3124,-75.7814 🏢 AGRCAN 🌡️💧🎐⚖️☔🌱💨☀️</dd>
+            <dt>@[GOES19] !station aca1ea74</dt>
+            <dd>🌡️6.7 °C 💧90% 🎐0.7 km/h SW ⚖️1015 hPa ☔0 mm/1h ☔0 mm/24h 🌱12.8 °C 🌱12.3 °C +2 📋NEPEAN, ON, CA ⏱️55m ago</dd>
+          </dl>
+
+          <h3>Diagnostics</h3>
+          <dl>
+            <dt>unknown location: <i>name</i></dt>
+            <dd>No place of that name inside the YOW boundary.</dd>
+            <dt>no recent <i>sensor</i> near <i>place</i></dt>
+            <dd>No station reported that sensor in the last 3 hours.</dd>
+            <dt>unknown station: <i>id</i></dt>
+            <dd>Not the ID of a station in the list.</dd>
+            <dt>no readings from <i>id</i></dt>
+            <dd>No reading has been received from the station.</dd>
+            <dt>unknown emoji: <i>emoji</i></dt>
+            <dd>Not an emoji of the replies; the emoji table lists them.</dd>
+            <dt>usage: …</dt>
+            <dd>The command needs a location, an ID, an emoji or a text.</dd>
+            <dt>Could not save your suggestion, try again later.</dt>
+            <dd>The suggestion could not be saved; send it again later.</dd>
+            <dt>Could not save your bug report, try again later.</dt>
+            <dd>The bug report could not be saved; send it again later.</dd>
+            <dt>Under maintenance, try again later.</dt>
+            <dd>The bot is switched to maintenance; every command gets this reply.</dd>
+          </dl>
+
+          <h3>See also</h3>
+          <p>The station list and map above for the IDs, and the emoji table for what each emoji stands for.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Version <span id="version">0.0.3</span> - last modified <span id="modified">2026-10-05</span></footer>
+
+  <noscript><p class="empty">This page needs JavaScript to list the stations.</p></noscript>
+  <script src="data/stations.js"></script>
+  <script src="data/places.js"></script>
+  <script src="coordinates.js"></script>
+  <script src="libraries/maplibre-gl.js"></script>
+  <script src="app.js"></script>
+  <script data-goatcounter="https://goesbot.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
