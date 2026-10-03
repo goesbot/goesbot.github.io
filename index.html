@@ -103,26 +103,39 @@
           <p>GOES19 – Weather readings from stations across the Ottawa Valley, received via GOES-19's downlink.</p>
 
           <h3>Synopsis</h3>
-          <p><b>@[GOES19]</b> <b>!temp</b> | <b>!humidity</b> | <b>!wind</b> | <b>!pressure</b> | <b>!rain1</b> | <b>!rain24</b> <i>location</i><br>
+          <p><b>@[GOES19]</b> <b>!help</b> [<i>category</i>]<br>
+            <b>@[GOES19]</b> <b>!temp</b> | <b>!humidity</b> | <b>!wind</b> | <b>!pressure</b> | <b>!rain1</b> | <b>!rain24</b> <i>location</i><br>
             <b>@[GOES19]</b> <b>!station</b> | <b>!info</b> <i>id</i><br>
             <b>@[GOES19]</b> <b>!find</b> <i>location</i><br>
             <b>@[GOES19]</b> <b>!type</b> <i>emoji</i><br>
             <b>@[GOES19]</b> <b>!status</b><br>
             <b>@[GOES19]</b> <b>!stats</b><br>
             <b>@[GOES19]</b> <b>!suggestion</b> <i>text</i><br>
-            <b>@[GOES19]</b> <b>!ping</b><br>
-            <b>@[GOES19]</b> <b>!help</b> [<i>category</i>]</p>
+            <b>@[GOES19]</b> <b>!ping</b></p>
 
           <h3>Description</h3>
           <p>The bot listens on the <b>#weather</b> and <b>#bots</b> channels and answers a message that
             mentions it, <b>@[GOES19]</b>, and carries a command. The mention can be anywhere in the message.
             A message without the mention gets no reply.</p>
+          <p>On <b>#testing</b> it answers <b>!ping</b> only; every other command gets no reply there.</p>
           <p>A <i>location</i> is a city, town, village or neighbourhood inside the YOW boundary. Case, accents
             and punctuation don't matter, and small typos are forgiven. An <i>id</i> is a station's 8-character
             ID from the list above.</p>
 
           <h3>Commands</h3>
           <dl>
+            <dt><b>!help</b> [<i>category</i>]</dt>
+            <dd>Without a category, the list of categories. With one, its commands:
+              <dl>
+                <dt><b>!help ping</b></dt>
+                <dd>!ping.</dd>
+                <dt><b>!help sensors</b></dt>
+                <dd>!temp, !humidity, !wind, !pressure, !rain1, !rain24, !type.</dd>
+                <dt><b>!help stations</b></dt>
+                <dd>!station, !info, !find.</dd>
+                <dt><b>!help utils</b></dt>
+                <dd>!status, !stats, !suggestion.</dd>
+              </dl></dd>
             <dt><b>!temp</b> <i>location</i></dt>
             <dd>🌡️ Air temperature.</dd>
             <dt><b>!humidity</b> <i>location</i></dt>
@@ -139,8 +152,7 @@
                 that sensor in the last 3 hours. The reply says where that station is (📍)
                 and how old the reading is (⏱️).</p></dd>
             <dt><b>!station</b> <i>id</i></dt>
-            <dd>Every sensor of that station's latest message, rain as the total of the last hour and of the
-              last 24 hours (☔), then its name (📋) and the age of the message.
+            <dd>Every sensor of that station's latest message, then its name (📋) and the age of the message.
               Readings that don't fit in one message are left out and counted (<b>+3</b>).</dd>
             <dt><b>!info</b> <i>id</i></dt>
             <dd>What the station is: name (📋), nearest settlement (📍), coordinates (🗺️), agency (🏢) and one
@@ -150,29 +162,14 @@
             <dt><b>!type</b> <i>emoji</i></dt>
             <dd>What one emoji of the replies stands for, as in the emoji table.</dd>
             <dt><b>!status</b></dt>
-            <dd>Whether the GOES-19 downlink is being decoded (🛰️ OK, or ERR when nothing has come in for
-              5 minutes), the frequency the receiver is tuned to (📻), the signal-to-noise ratio of the
-              signal (📶), whether the Viterbi decoder (🧮) and the deframer (🎞️) are in sync (SYNCED or NOSYNC) and how
-              long ago the newest station message was received (📡).</dd>
+            <dd>Receiver health: downlink (🛰️), frequency (📻), SNR (📶), Viterbi (🧮) and deframer (🎞️) sync, and the age of the last message (📡).</dd>
             <dt><b>!stats</b></dt>
             <dd>Bot statistics: stations, sensor types, boundary area, commands, version and last update.</dd>
             <dt><b>!suggestion</b> <i>text</i></dt>
             <dd>Sends a suggestion for the bot to its operator, with your name and the channel.</dd>
             <dt><b>!ping</b></dt>
-            <dd>🏓 Pong!, with how many hops your message took to reach the bot and the repeaters it came
-              through.</dd>
-            <dt><b>!help</b> [<i>category</i>]</dt>
-            <dd>Without a category, the list of categories. With one, its commands:
-              <dl>
-                <dt><b>!help ping</b></dt>
-                <dd>!ping.</dd>
-                <dt><b>!help sensors</b></dt>
-                <dd>!temp, !humidity, !wind, !pressure, !rain1, !rain24, !type.</dd>
-                <dt><b>!help stations</b></dt>
-                <dd>!station, !info, !find.</dd>
-                <dt><b>!help utils</b></dt>
-                <dd>!status, !stats, !suggestion.</dd>
-              </dl></dd>
+            <dd>🏓 Pong!, tagging you (<b>@[</b><i>your name</i><b>]</b>), with how many hops your message took
+              to reach the bot and the repeaters it came through. Works on <b>#testing</b> too.</dd>
             <dt><b>!bots</b></dt>
             <dd>On <b>#bots</b>, without a mention: the bot introduces itself.</dd>
           </dl>
@@ -194,7 +191,7 @@
             <dt>@[GOES19] !suggestion add snow depth</dt>
             <dd>Thanks! Your suggestion was saved.</dd>
             <dt>@[GOES19] !ping</dt>
-            <dd>🏓 Pong! 7 hops | Path: 6a145b,bb4e7c,6bdc45,7c4ca5,d06ebb,6ce364,094137</dd>
+            <dd>@[Bob] 🏓 Pong! 7 hops | Path: 6a145b,bb4e7c,6bdc45,7c4ca5,d06ebb,6ce364,094137</dd>
             <dt>@[GOES19] !info aca1ea74</dt>
             <dd>📋 NEPEAN, ON, CA 📍 ARLINGTON WOODS, OTTAWA, ON 🗺️ 45.3124,-75.7814 🏢 AGRCAN 🌡️💧🎐⚖️🔺🔻🌱🌧️</dd>
             <dt>@[GOES19] !station aca1ea74</dt>
