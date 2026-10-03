@@ -4,6 +4,22 @@
   const TYPE_LABEL = { METEOROLOGICAL: 'Meteorological', MIXED: 'Mixed (meteorological and hydrological)' };
   const TYPE_EMOJI = { METEOROLOGICAL: '🌤️', MIXED: '🌤️🌊' };
   const REGION_LABEL = { ON: 'Ontario', QC: 'Quebec' };
+  // NESDIS DCS agency codes. NOAA publishes no table of them: each name comes from who runs the
+  // agency's stations (checked 2026-10-03 against Ontario's monitoring station list, Ontario's
+  // fire weather station map and Québec's hydrometric and dam registries).
+  const AGENCY_NAME = {
+    WSCGUE: 'Water Survey of Canada (Environment and Climate Change Canada)',
+    ONTMNR: 'Ontario Ministry of Natural Resources (conservation authority stations)',
+    OMNH20: 'Ontario Ministry of Natural Resources',
+    ONFIRE: 'Ontario Ministry of Natural Resources, Aviation, Forest Fire and Emergency Services',
+    ONWATR: 'Parks Canada, Ontario Waterways (Rideau Canal)',
+    ONTARI: 'Government of Ontario (Canada–Ontario hydrometric agreement)',
+    QNRCAN: "Québec Ministry of the Environment, Direction de l'expertise hydrique (formerly CEHQ)",
+    QUEHYD: 'Hydro-Québec',
+    BROPOW: 'Brookfield Renewable Power',
+    AGRCAN: 'Agriculture and Agri-Food Canada',
+    NRCAN1: 'Natural Resources Canada',
+  };
   const COLOR = { inside: '#2a6fdb', outside: '#c2570c' };
   const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
 
@@ -36,7 +52,7 @@
     const text = state.text.trim();
     const matching = q => DATA.stations.filter(s => (!state.type || s.type === state.type)
       && (!state.sensor || s.sensors.some(e => e.code === state.sensor))
-      && (!q || [s.name, s.id, s.agency, s.place, s.region].some(v => v && v.toLowerCase().includes(q))));
+      && (!q || [s.name, s.id, s.agency, AGENCY_NAME[s.agency], s.place, s.region].some(v => v && v.toLowerCase().includes(q))));
     const places = gaz && !state.near && text.length >= 2 ? gaz.search(text, SUGGESTIONS) : [];
     let stations = matching(state.near ? '' : text.toLowerCase());
     let near = state.near, guessed = false;
@@ -148,7 +164,7 @@
     const about = el('div', 'muted sub');
     if (s.agency) {
       const agency = el('span', 'tip', s.agency);
-      agency.title = 'Agency';
+      agency.title = `Agency: ${AGENCY_NAME[s.agency] || s.agency}`;
       about.append(agency, ' · ');
     }
     const type = el('span', 'tip', TYPE_EMOJI[s.type] || s.type);

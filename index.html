@@ -150,9 +150,10 @@
             <dt><b>!type</b> <i>emoji</i></dt>
             <dd>What one emoji of the replies stands for, as in the emoji table.</dd>
             <dt><b>!status</b></dt>
-            <dd>Whether the GOES-19 downlink is being decoded (📡 OK, or ERR when nothing has come in for
-              5 minutes), the frequency the receiver is tuned to (📻) and how long ago the newest station
-              message was received (💬).</dd>
+            <dd>Whether the GOES-19 downlink is being decoded (🛰️ OK, or ERR when nothing has come in for
+              5 minutes), the frequency the receiver is tuned to (📻), the signal-to-noise ratio of the
+              signal (📶), whether the Viterbi decoder (🧮) and the deframer (🎞️) are in sync (SYNCED or NOSYNC) and how
+              long ago the newest station message was received (📡).</dd>
             <dt><b>!stats</b></dt>
             <dd>Bot statistics: stations, sensor types, boundary area, commands, version and last update.</dd>
             <dt><b>!suggestion</b> <i>text</i></dt>
@@ -187,7 +188,7 @@
             <dt>@[GOES19] !type 🌧️</dt>
             <dd>🌧️ Rain, total or rate</dd>
             <dt>@[GOES19] !status</dt>
-            <dd>📡Downlink: OK 📻Frequency: 1694.1MHz 💬Last Received: 47s ago</dd>
+            <dd>🛰️Downlink:OK 📻Freq:1.69GHz 📶SNR:5.1dB 🧮Viterbi:SYNCED 🎞️Deframer:SYNCED 📡Last Received: 47s ago</dd>
             <dt>@[GOES19] !stats</dt>
             <dd>stations: 61, sensor types: 22, boundary: 38,600 km², commands: 15, version: 0.0.1, last updated: 2026-10-02</dd>
             <dt>@[GOES19] !suggestion add snow depth</dt>
